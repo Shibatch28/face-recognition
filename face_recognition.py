@@ -25,11 +25,20 @@ class entry:
             maxIndex = size.index(maxSize)
             
             recognizedFace = faces[maxIndex]
-            returnFace = self.Frame[recognizedFace[0] + recognizedFace[2] - 1, recognizedFace[1] + recognizedFace[3] - 1]
+            # editFrame = self.frame
+            returnFace = self.frame[recognizedFace[1]:recognizedFace[1] + recognizedFace[3] - 1, 
+                                    recognizedFace[0]:recognizedFace[0] + recognizedFace[2] - 1]
 
-            cv2.rectangle(self.frame, (recognizedFace[0], recognizedFace[1]), (recognizedFace[0] + recognizedFace[2], recognizedFace[1] + recognizedFace[3]), (255, 0, 0), 2)
-        
+            # returnFace = self.frame
+
+            # cv2.rectangle(editFrame, 
+            #               (recognizedFace[0], recognizedFace[1]), 
+            #               (recognizedFace[0] + recognizedFace[2], recognizedFace[1] + recognizedFace[3]), 
+            #               (255, 0, 0), 2)
+
             return returnFace
+        else:
+            return self.frame
 
         # # 検出された顔に矩形を描画
         # for (x, y, w, h) in faces:

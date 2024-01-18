@@ -10,22 +10,26 @@ class entry:
 
     def register(self):
         # グレースケール化
-        gray = cv2.cvtColor(self.frame. cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
         # 顔検出
         faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
 
         # 画像面積が一番大きいものを抜き出す
         size = []
-        for (w, h) in faces:
+        for (x, y, w, h) in faces:
             size.append(w * h)
         
         # 最大値を探す
-        maxSize = size.max()
-        maxIndex = size.index(maxSize)
-        
-        returnFace = faces[maxIndex]
+        if len(size) > 0:
+            maxSize = max(size)
+            maxIndex = size.index(maxSize)
+            
+            recognizedFace = faces[maxIndex]
+            returnFace = self.Frame[recognizedFace[0] + recognizedFace[2] - 1, recognizedFace[1] + recognizedFace[3] - 1]
 
-        cv2.rectangle(self.frame (returnFace.x, returnFace.y), (returnFace.x + returnFace.w, returnFace.y + returnFace.h), (255, 0, 0), 2)
+            cv2.rectangle(self.frame, (recognizedFace[0], recognizedFace[1]), (recognizedFace[0] + recognizedFace[2], recognizedFace[1] + recognizedFace[3]), (255, 0, 0), 2)
+        
+            return returnFace
 
         # # 検出された顔に矩形を描画
         # for (x, y, w, h) in faces:

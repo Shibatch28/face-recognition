@@ -1,14 +1,17 @@
 import cv2
-import numpy as np
-from PIL import Image
-import os
+import copy
 
-class entry:
+'''
+
+画像登録用のクラス: entry
+
+'''
+class entry(object):
     def __init__(self, frame):
         self.frame = frame  # カメラから取得した画像
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-    def register(self):
+    def detect(self):
         # グレースケール化
         gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
         # 顔検出
@@ -25,30 +28,60 @@ class entry:
             maxIndex = size.index(maxSize)
             
             recognizedFace = faces[maxIndex]
-            # editFrame = self.frame
             returnFace = self.frame[recognizedFace[1]:recognizedFace[1] + recognizedFace[3] - 1, 
                                     recognizedFace[0]:recognizedFace[0] + recognizedFace[2] - 1]
-
-            # returnFace = self.frame
-
-            # cv2.rectangle(editFrame, 
-            #               (recognizedFace[0], recognizedFace[1]), 
-            #               (recognizedFace[0] + recognizedFace[2], recognizedFace[1] + recognizedFace[3]), 
-            #               (255, 0, 0), 2)
 
             return returnFace
         else:
             return self.frame
 
-        # # 検出された顔に矩形を描画
-        # for (x, y, w, h) in faces:
-        #     cv2.rectangle(self.frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+    def register(self, path, images, ids):
+        # LBPHFaceRecognizerのインスタンスを作成
+        recognizer = cv2.face.LBPHFaceRecognizer_create()
+        recognizer.train(images, ids)
+        recognizer.write(path)
+
+'''
+
+画像取得用のクラス authentication
+
+'''
+
+class authentication(object):
+    def __init__(self, path):
+        self.path = path
+    
+    def recognize(self, frame):
+        # トレーニング済みのモデルをロード
+        recognizer = cv2.face.LBPHFaceRecognizer_create()
+        faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        recognizer.read(self.path)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        faces = faceCascade.detectMultiScale( 
+            gray,
+            scaleFactor = 1.2,
+            minNeighbors = 5,
+            minSize = (30, 30),
+        )
+
+        for(x,y,w,h) in faces:
+            # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
+            id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
+
+            # 確信度が低い場合はラベルとしてUnknownを表示
+            if (confidence < 100):
+                id = f"ID: {id}"
+                confidence = f"  {round(100 - confidence)}%"
+            else:
+                id = "Unknown"
+                confidence = f"  {round(100 - confidence)}%"
+            
+            result = copy.deepcopy(frame)
+            cv2.putText(result, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
+            cv2.putText(result, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1) 
         
-        
-
-
-
-
-class authentication:
-    def __init__(self):
-        pass
+        return result

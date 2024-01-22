@@ -38,6 +38,8 @@ class entry(object):
     def register(self, path, images, ids):
         # LBPHFaceRecognizerのインスタンスを作成
         recognizer = cv2.face.LBPHFaceRecognizer_create()
+        for i in range(len(images)):
+            images[i] = cv2.cvtColor(images[i], cv2.COLOR_BGR2GRAY)
         recognizer.train(images, ids)
         recognizer.write(path)
 
@@ -68,6 +70,9 @@ class authentication(object):
             minSize = (30, 30),
         )
 
+        # result を frame のコピーで初期化
+        result = copy.deepcopy(frame)
+
         for(x,y,w,h) in faces:
             # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
             id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
@@ -80,7 +85,6 @@ class authentication(object):
                 id = "Unknown"
                 confidence = f"  {round(100 - confidence)}%"
             
-            result = copy.deepcopy(frame)
             cv2.putText(result, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
             cv2.putText(result, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1) 
         

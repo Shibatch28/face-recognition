@@ -41,8 +41,6 @@ class entry(object):
         images = [cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in images]
         ids = np.array(ids)
         recognizer = cv2.face.LBPHFaceRecognizer_create()
-        for i in range(len(images)):
-            images[i] = cv2.cvtColor(images[i], cv2.COLOR_BGR2GRAY)
         recognizer.train(images, ids)
         recognizer.write(path)
 

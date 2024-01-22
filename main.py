@@ -1,14 +1,18 @@
 import cv2
 import face_recognition
 import numpy as np
+import interface
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
+
+interface.thumbnail()
 counter = 0
 images = []
 ids = []
 trainerPath = 'trainer/trainer.yml'
 
 while True:
+
     ret, img = cap.read()
     if ret and counter < 20:
         cv2.imshow('Camera', img)
@@ -20,7 +24,8 @@ while True:
             counter += 1
     
     if counter == 20:
-        print(ids)
+        cv2.destroyWindow('Camera')
+        ids = np.array(ids, dtype=np.int32)
         auth.register(trainerPath, images, ids)
         counter += 1
         continue

@@ -1,5 +1,6 @@
 import cv2
 import copy
+import numpy as np
 
 '''
 
@@ -33,10 +34,12 @@ class entry(object):
 
             return returnFace
         else:
-            return self.frame
+            return None
 
     def register(self, path, images, ids):
         # LBPHFaceRecognizerのインスタンスを作成
+        images = [cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in images]
+        ids = np.array(ids)
         recognizer = cv2.face.LBPHFaceRecognizer_create()
         for i in range(len(images)):
             images[i] = cv2.cvtColor(images[i], cv2.COLOR_BGR2GRAY)
@@ -70,7 +73,6 @@ class authentication(object):
             minSize = (30, 30),
         )
 
-        # result を frame のコピーで初期化
         result = copy.deepcopy(frame)
 
         for(x,y,w,h) in faces:

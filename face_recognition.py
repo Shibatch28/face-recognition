@@ -1,6 +1,8 @@
 import cv2
 import copy
 import numpy as np
+import dlib
+from imutils import face_utils
 
 '''
 
@@ -35,6 +37,30 @@ class entry(object):
             return returnFace
         else:
             return None
+        
+    def checkDegree(self, frame):
+        detector = dlib.get_frontal_face_detector()
+        face_rects = detector(frame, 0)
+        face_landmark_path = './shape_predictor_68_face_landmarks.dat'
+        predictor = dlib.shape_predictor(face_landmark_path)
+        if len(face_rects) > 0:
+            shape = predictor(frame, face_rects[0])
+            shape = face_utils.shape_to_np(shape)
+            image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36], shape[39], shape[42], shape[45], shape[31], shape[35], shape[48], shape[54], shape[57], shape[8]])
+            K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002, 
+                0.0, 6.5308391993466671e+002, 2.3950000000000000e+002,
+                0.0, 0.0, 1.0]
+            D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
+            cam_matrix = np.array(K).reshape(3, 3).astype(np.float32)
+            dist_coeffs = np.array(D).reshape(5, 1).astype(np.float32)
+
+            _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
+            rotation_mat, _ = cv2.Rodrigues(rotation_vec)
+            pose_mat = cv2.hconcat((rotation_mat, translation_vec))
+            _, _, _, _, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
+
+            print(euler_angle)
+
 
     def register(self, path, images, ids):
         # LBPHFaceRecognizerのインスタンスを作成

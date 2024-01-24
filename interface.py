@@ -1,7 +1,10 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 
+
+FAVICON_FILE = 'src/favicon.ico'
 root = tk.Tk()
+root.iconbitmap(default=FAVICON_FILE)
 
 FLAG_ENTRY_OR_AUTHENTICATE = 0
 
@@ -13,7 +16,6 @@ def center(window, button, y):
     window.update_idletasks()  # ウィンドウの現在のサイズを取得するために必要
     width = window.winfo_width()
     button_width = button.winfo_width()
-    print(button_width)
     x = (width - button_width) // 2
     button.place(x=x, y=y)
 
@@ -35,14 +37,13 @@ def thumbnail():
     # 画像の読み込みと背景に設定
     background_image = Image.open("src/thumbnail.png")  # 画像パスを指定
     background_photo = ImageTk.PhotoImage(background_image)
-
     background_label = tk.Label(root, image=background_photo)
     background_label.place(relwidth=1, relheight=1)
 
     entryButton = tk.Button(root, text="Entry", font=(WINDOW_FONT, '20'), command=entrySet)
     entryButton.pack()
     center(root, entryButton, 320)
-
+    
     authenticateButton = tk.Button(root, text="Authenticate", font=(WINDOW_FONT, '20'), command=authenticateSet)
     authenticateButton.pack()
     center(root, authenticateButton, 380)

@@ -17,24 +17,25 @@ if FLAG_ENTRY_OR_AUTHENTICATE == 1:
     while True:
 
         ret, img = cap.read()
-        if ret and counter < 20:
+        if ret :
             cv2.imshow('Entry', img)
             auth = face_recognition.entry(img)
             detected = auth.detect()
+            auth.checkDegree(img)
             if detected is not None and len(detected) > 0:
                 images.append(detected)
                 ids.append(counter)
-                counter += 1
+                # counter += 1
         
-        if counter == 20:
-            cv2.destroyWindow('Entry')
-            auth.register(trainerPath, images, ids)
-            counter += 1
-            continue
+        # if counter == 20:
+        #     cv2.destroyWindow('Entry')
+        #     auth.register(trainerPath, images, ids)
+        #     counter += 1
+        #     continue
 
-        if ret and counter > 20:
-            recognized = face_recognition.authentication(trainerPath).recognize(img)
-            cv2.imshow('recognized', recognized)
+        # if ret and counter > 20:
+        #     recognized = face_recognition.authentication(trainerPath).recognize(img)
+        #     cv2.imshow('recognized', recognized)
                 
         key = cv2.waitKey(1)
         if key==ord('q'):

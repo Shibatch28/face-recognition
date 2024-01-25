@@ -3,9 +3,10 @@ import face_recognition
 import numpy as np
 import interface
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 
 FLAG_ENTRY_OR_AUTHENTICATE = interface.thumbnail()
+FLAG_ENTRY_NUMBER = 0
 
 # 登録用
 if FLAG_ENTRY_OR_AUTHENTICATE == 1:
@@ -13,6 +14,8 @@ if FLAG_ENTRY_OR_AUTHENTICATE == 1:
     images = []
     ids = []
     trainerPath = 'trainer/trainer.yml'
+    
+    face_angle_checker = face_recognition.FaceAngleChecker()
 
     while True:
 
@@ -21,21 +24,43 @@ if FLAG_ENTRY_OR_AUTHENTICATE == 1:
             cv2.imshow('Entry', img)
             auth = face_recognition.entry(img)
             detected = auth.detect()
-            auth.checkDegree(img)
+                        
             if detected is not None and len(detected) > 0:
-                images.append(detected)
-                ids.append(counter)
-                # counter += 1
-        
-        # if counter == 20:
-        #     cv2.destroyWindow('Entry')
-        #     auth.register(trainerPath, images, ids)
-        #     counter += 1
-        #     continue
-
-        # if ret and counter > 20:
-        #     recognized = face_recognition.authentication(trainerPath).recognize(img)
-        #     cv2.imshow('recognized', recognized)
+                angles = face_angle_checker.check_degree(detected)
+                if angles is not None:
+                    # print("Pitch: {:.2f}, Yaw: {:.2f}, Roll: {:.2f}".format(*angles))
+                    if FLAG_ENTRY_NUMBER == 0:
+                        if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] > 160 and angles[2] < 180:
+                            images.append(detected)
+                            ids.append(counter)
+                            FLAG_ENTRY_NUMBER += 1
+                            print('正面OK')
+                    elif FLAG_ENTRY_NUMBER == 1:
+                        if angles[0] < 2.5 and angles[2] > 170 and angles[2] < 180:
+                            images.append(detected)
+                            ids.append(counter)
+                            FLAG_ENTRY_NUMBER += 1
+                            print('上OK')
+                    elif FLAG_ENTRY_NUMBER == 2:
+                        if angles[0] > 18 and angles[2] > 160 and angles[2] < 180:
+                            images.append(detected)
+                            ids.append(counter)
+                            FLAG_ENTRY_NUMBER += 1
+                            print('下OK')
+                    elif FLAG_ENTRY_NUMBER == 3:
+                        if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] > 160 and angles[2] < 170:
+                            images.append(detected)
+                            ids.append(counter)
+                            FLAG_ENTRY_NUMBER += 1
+                            print('右OK')
+                    elif FLAG_ENTRY_NUMBER == 4:
+                        if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] < -175:
+                            images.append(detected)
+                            ids.append(counter)
+                            FLAG_ENTRY_NUMBER += 1
+                            print('左OK')
+                            auth.register(trainerPath, images, ids)
+                            break
                 
         key = cv2.waitKey(1)
         if key==ord('q'):

@@ -31,34 +31,24 @@ if FLAG_ENTRY_OR_AUTHENTICATE == 1:
                     # print("Pitch: {:.2f}, Yaw: {:.2f}, Roll: {:.2f}".format(*angles))
                     if FLAG_ENTRY_NUMBER == 0:
                         if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] > 160 and angles[2] < 180:
-                            images.append(detected)
-                            ids.append(counter)
+                            # images.append(detected)
+                            # ids.append(0)
                             FLAG_ENTRY_NUMBER += 1
                             print('正面OK')
-                    elif FLAG_ENTRY_NUMBER == 1:
-                        if angles[0] < 2.5 and angles[2] > 170 and angles[2] < 180:
-                            images.append(detected)
-                            ids.append(counter)
-                            FLAG_ENTRY_NUMBER += 1
-                            print('上OK')
-                    elif FLAG_ENTRY_NUMBER == 2:
-                        if angles[0] > 18 and angles[2] > 160 and angles[2] < 180:
-                            images.append(detected)
-                            ids.append(counter)
-                            FLAG_ENTRY_NUMBER += 1
-                            print('下OK')
-                    elif FLAG_ENTRY_NUMBER == 3:
-                        if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] > 160 and angles[2] < 170:
-                            images.append(detected)
-                            ids.append(counter)
-                            FLAG_ENTRY_NUMBER += 1
-                            print('右OK')
-                    elif FLAG_ENTRY_NUMBER == 4:
-                        if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] < -175:
-                            images.append(detected)
-                            ids.append(counter)
-                            FLAG_ENTRY_NUMBER += 1
-                            print('左OK')
+                            detectedHSV = cv2.cvtColor(detected, cv2.COLOR_BGR2HSV)
+                            h, s, v = cv2.split(detectedHSV)
+                            vChanged = np.zeros(int(v.size))
+                            for i in range(1, 10):
+                                vChanged = v / i
+                                vChanged = np.clip(vChanged, 0, 255).astype(np.uint8)
+                                mergedImage = cv2.cvtColor(cv2.merge((h, s, vChanged)), cv2.COLOR_HSV2BGR)
+                                cv2.imshow("Changed" + str(i), mergedImage)
+                                while(1):
+                                    key = cv2.waitKey(1)
+                                    if key==ord('q'):
+                                        break
+                                images.append(mergedImage)
+                                ids.append(i)
                             auth.register(trainerPath, images, ids)
                             break
                 

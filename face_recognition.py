@@ -85,6 +85,7 @@ class authentication(object):
         for(x,y,w,h) in faces:
             # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
             id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
+            return_confidence = round(100 - confidence)
 
             # 確信度が低い場合はラベルとしてUnknownを表示
             if (confidence < 100):
@@ -97,7 +98,7 @@ class authentication(object):
             cv2.putText(result, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
             cv2.putText(result, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1) 
         
-        return result
+        return result, return_confidence
 
 
 class FaceAngleChecker:
@@ -113,23 +114,28 @@ class FaceAngleChecker:
         return self.predictor(gray, faces[0])
 
     def calculate_angle(self, landmarks):
-        # 顔の特徴点を基にして角度を計算
+        # 目の中心点
+        left_eye_center = np.array([landmarks.part(36).x, landmarks.part(36).y])
+        right_eye_center = np.array([landmarks.part(45).x, landmarks.part(45).y])
+        mid_eye_point = (left_eye_center + right_eye_center) / 2
+
+        # 鼻先の点
         nose_point = np.array([landmarks.part(30).x, landmarks.part(30).y])
-        chin_point = np.array([landmarks.part(8).x, landmarks.part(8).y])
-        left_eye_point = np.array([landmarks.part(36).x, landmarks.part(36).y])
-        right_eye_point = np.array([landmarks.part(45).x, landmarks.part(45).y])
-        mid_eye_point = (left_eye_point + right_eye_point) / 2
 
-        # 2D画像上でのベクトルを計算
-        nose_vector = nose_point - mid_eye_point
-        chin_vector = chin_point - mid_eye_point
+        # 耳の近くの点（ヨー角計算用）
+        left_side_point = np.array([landmarks.part(0).x, landmarks.part(0).y])
+        right_side_point = np.array([landmarks.part(16).x, landmarks.part(16).y])
 
-        # 角度を計算（例：pitch, yaw, roll）
-        pitch = np.arctan2(nose_vector[1], chin_vector[1])
-        yaw = np.arctan2(nose_vector[0], chin_vector[0])
-        roll = np.arctan2(left_eye_point[1] - right_eye_point[1], left_eye_point[0] - right_eye_point[0])
+        # ロール角（顔の傾斜）を計算
+        roll = np.arctan2(right_eye_center[1] - left_eye_center[1], right_eye_center[0] - left_eye_center[0])
 
-        return np.degrees(pitch), np.degrees(yaw), np.degrees(roll)
+        # ピッチ角（顔の上下の向き）を計算
+        pitch = np.arctan2(mid_eye_point[1] - nose_point[1], nose_point[0] - mid_eye_point[0])
+
+        # ヨー角（顔の左右の向き）を計算
+        yaw = np.arctan2(right_side_point[0] - left_side_point[0], right_side_point[1] - left_side_point[1])
+
+        return np.degrees(pitch) + 90, np.degrees(yaw) - 90, np.degrees(roll)
 
     def check_degree(self, frame):
         landmarks = self.get_landmarks(frame)

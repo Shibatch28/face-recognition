@@ -3,10 +3,12 @@ import face_recognition
 import numpy as np
 import interface
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 FLAG_ENTRY_OR_AUTHENTICATE = interface.thumbnail()
 FLAG_ENTRY_NUMBER = 0
+
+print(FLAG_ENTRY_OR_AUTHENTICATE)
 
 # 登録用
 if FLAG_ENTRY_OR_AUTHENTICATE == 1:
@@ -27,30 +29,70 @@ if FLAG_ENTRY_OR_AUTHENTICATE == 1:
                         
             if detected is not None and len(detected) > 0:
                 angles = face_angle_checker.check_degree(detected)
-                if angles is not None:
-                    # print("Pitch: {:.2f}, Yaw: {:.2f}, Roll: {:.2f}".format(*angles))
+                if angles is not None :
+                    print("Yaw: {:.2f}, Pitch: {:.2f}, Roll: {:.2f}".format(*angles))
+                    pitch = angles[1]
+                    yaw = angles[0]
+                    roll = angles[2]
+                    # Pitch: 顔の上下
+                    # Yaw: 顔の左右
+                    # Roll: 顔の傾斜
                     if FLAG_ENTRY_NUMBER == 0:
-                        if angles[0] > 10.5 and angles[0] < 11.5 and angles[2] > 160 and angles[2] < 180:
-                            # images.append(detected)
-                            # ids.append(0)
-                            FLAG_ENTRY_NUMBER += 1
-                            print('正面OK')
+                        if pitch > -5 and pitch < 5 and yaw > -5 and yaw < 5:
                             detectedHSV = cv2.cvtColor(detected, cv2.COLOR_BGR2HSV)
                             h, s, v = cv2.split(detectedHSV)
-                            vChanged = np.zeros(int(v.size))
-                            for i in range(1, 10):
-                                vChanged = v / i
-                                vChanged = np.clip(vChanged, 0, 255).astype(np.uint8)
-                                mergedImage = cv2.cvtColor(cv2.merge((h, s, vChanged)), cv2.COLOR_HSV2BGR)
-                                cv2.imshow("Changed" + str(i), mergedImage)
-                                while(1):
-                                    key = cv2.waitKey(1)
-                                    if key==ord('q'):
-                                        break
-                                images.append(mergedImage)
-                                ids.append(i)
-                            auth.register(trainerPath, images, ids)
-                            break
+                            v_mean = v.mean()
+                            if v_mean > 100:
+                                vChanged = np.zeros(int(v.size))
+                                for i in range(1, 10):
+                                    vChanged = v / i
+                                    vChanged = np.clip(vChanged, 0, 255).astype(np.uint8)
+                                    mergedImage = cv2.cvtColor(cv2.merge((h, s, vChanged)), cv2.COLOR_HSV2BGR)
+                                    # cv2.imshow("Changed" + str(i), mergedImage)
+                                    images.append(mergedImage)
+                                    ids.append(i)
+                                FLAG_ENTRY_NUMBER += 1
+                                interface.caution(640, 320, '正面の画像を取得しました', 40,
+                                                   '次は「右」を向いてください.', 100)
+                            else:
+                                print("Caution!")
+                    elif FLAG_ENTRY_NUMBER == 1:
+                        if pitch > -10 and pitch < 10 and yaw > -90 and yaw < -10:
+                            detectedHSV = cv2.cvtColor(detected, cv2.COLOR_BGR2HSV)
+                            h, s, v = cv2.split(detectedHSV)
+                            v_mean = v.mean()
+                            if v_mean > 100:
+                                vChanged = np.zeros(int(v.size))
+                                for i in range(1, 10):
+                                    vChanged = v / i
+                                    vChanged = np.clip(vChanged, 0, 255).astype(np.uint8)
+                                    mergedImage = cv2.cvtColor(cv2.merge((h, s, vChanged)), cv2.COLOR_HSV2BGR)
+                                    # cv2.imshow("Changed" + str(i), mergedImage)
+                                    images.append(mergedImage)
+                                    ids.append(i)
+                                FLAG_ENTRY_NUMBER += 1
+                                interface.caution(640, 320, '右向きの画像を取得しました', 40,
+                                                   '次は「左」を向いてください.', 100)
+                    elif FLAG_ENTRY_NUMBER == 2:
+                        if pitch > -10 and pitch < 10 and yaw > 10 and yaw < 90:
+                            detectedHSV = cv2.cvtColor(detected, cv2.COLOR_BGR2HSV)
+                            h, s, v = cv2.split(detectedHSV)
+                            v_mean = v.mean()
+                            if v_mean > 100:
+                                vChanged = np.zeros(int(v.size))
+                                for i in range(1, 10):
+                                    vChanged = v / i
+                                    vChanged = np.clip(vChanged, 0, 255).astype(np.uint8)
+                                    mergedImage = cv2.cvtColor(cv2.merge((h, s, vChanged)), cv2.COLOR_HSV2BGR)
+                                    # cv2.imshow("Changed" + str(i), mergedImage)
+                                    images.append(mergedImage)
+                                    ids.append(i)
+                                FLAG_ENTRY_NUMBER += 1
+                                auth.register(trainerPath, images, ids)
+                                interface.caution(640, 320, '左向きの画像を取得しました', 40,
+                                                   '顔画像登録が完了しました. 再起動してください. ', 100)
+                                break
+
                 
         key = cv2.waitKey(1)
         if key==ord('q'):
@@ -68,8 +110,11 @@ elif FLAG_ENTRY_OR_AUTHENTICATE == 2:
         ret, img = cap.read()
 
         if ret:
-            recognized = face_recognition.authentication(trainerPath).recognize(img)
-            cv2.imshow('recognized', recognized)
+            recognized, confidence = face_recognition.authentication(trainerPath).recognize(img)
+            if confidence is not None:
+                if confidence > 60:
+                    interface.authenticated()
+                    break
                 
         key = cv2.waitKey(1)
         if key==ord('q'):

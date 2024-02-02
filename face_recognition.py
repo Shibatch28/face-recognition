@@ -43,23 +43,6 @@ class entry(object):
         face_rects = detector(frame, 0)
         face_landmark_path = './shape_predictor_68_face_landmarks.dat'
         predictor = dlib.shape_predictor(face_landmark_path)
-        if len(face_rects) > 0:
-            shape = predictor(frame, face_rects[0])
-            shape = face_utils.shape_to_np(shape)
-            image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36], shape[39], shape[42], shape[45], shape[31], shape[35], shape[48], shape[54], shape[57], shape[8]])
-            K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002, 
-                0.0, 6.5308391993466671e+002, 2.3950000000000000e+002,
-                0.0, 0.0, 1.0]
-            D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
-            cam_matrix = np.array(K).reshape(3, 3).astype(np.float32)
-            dist_coeffs = np.array(D).reshape(5, 1).astype(np.float32)
-
-            _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
-            rotation_mat, _ = cv2.Rodrigues(rotation_vec)
-            pose_mat = cv2.hconcat((rotation_mat, translation_vec))
-            _, _, _, _, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
-
-            print(euler_angle)
 
 
     def register(self, path, images, ids):
@@ -98,10 +81,12 @@ class authentication(object):
         )
 
         result = copy.deepcopy(frame)
+        return_confidence = None
 
         for(x,y,w,h) in faces:
             # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
             id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
+            return_confidence = round(100 - confidence)
 
             # 確信度が低い場合はラベルとしてUnknownを表示
             if (confidence < 100):
@@ -114,4 +99,54 @@ class authentication(object):
             cv2.putText(result, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
             cv2.putText(result, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1) 
         
-        return result
+        return result, return_confidence
+
+
+class FaceAngleChecker:
+    def __init__(self):
+        self.detector = dlib.get_frontal_face_detector()
+        self.predictor = dlib.shape_predictor('./shape_predictor_68_face_landmarks.dat')
+
+    def get_landmarks(self, frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.detector(gray)
+        if len(faces) == 0:
+            return None
+        return self.predictor(gray, faces[0])
+
+    def calculate_angle(self, landmarks):
+        # 目の中心点
+        left_eye_center = np.array([landmarks.part(36).x, landmarks.part(36).y])
+        right_eye_center = np.array([landmarks.part(45).x, landmarks.part(45).y])
+        mid_eye_point = (left_eye_center + right_eye_center) / 2
+
+        # 鼻先の点
+        nose_point = np.array([landmarks.part(30).x, landmarks.part(30).y])
+
+        # 耳の近くの点（ヨー角計算用）
+        left_side_point = np.array([landmarks.part(0).x, landmarks.part(0).y])
+        right_side_point = np.array([landmarks.part(16).x, landmarks.part(16).y])
+
+        # ロール角（顔の傾斜）を計算
+        roll = np.arctan2(right_eye_center[1] - left_eye_center[1], right_eye_center[0] - left_eye_center[0])
+
+        # ピッチ角（顔の上下の向き）を計算
+        pitch = np.arctan2(mid_eye_point[1] - nose_point[1], nose_point[0] - mid_eye_point[0])
+
+        # ヨー角（顔の左右の向き）を計算
+        yaw = np.arctan2(right_side_point[0] - left_side_point[0], right_side_point[1] - left_side_point[1])
+
+        return np.degrees(pitch) + 90, np.degrees(yaw) - 90, np.degrees(roll)
+
+    def check_degree(self, frame):
+        landmarks = self.get_landmarks(frame)
+        if landmarks is None:
+            return None
+        return self.calculate_angle(landmarks)
+
+# 使用例
+# face_angle_checker = FaceAngleChecker()
+# frame = cv2.imread('path_to_image.jpg')  # 画像を読み込む
+# angles = face_angle_checker.check_degree(frame)
+# if angles is not None:
+#     print("Pitch: {:.2f}, Yaw: {:.2f}, Roll: {:.2f}".format(*angles))

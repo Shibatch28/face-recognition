@@ -81,7 +81,7 @@ def authenticated():
     root = tk.Tk()
     root.iconbitmap(default=FAVICON_FILE)
     root.title(u"Face Recognizer")
-    root.geometry("400x300")
+    root.geometry("400x200")
     hd = tk.Label(root, text=u"認証完了", font=(WINDOW_FONT, '32'))
     hd.pack()
     center(root, hd, 40)

@@ -53,24 +53,25 @@ def thumbnail():
     return FLAG_ENTRY_OR_AUTHENTICATE
 
 def caution(width, height, head, head_y, message, message_y):
-    winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
-    root = tk.Tk()
-    root.iconbitmap(default=FAVICON_FILE)
-    root.title(u"Face Recognizer")
-    root.geometry(str(width)+'x'+str(height))
-    hd = tk.Label(root, text=head, font=(WINDOW_FONT, '32'))
-    hd.pack()
-    center(root, hd, head_y)
-    msg = tk.Label(root, text=message, font=(WINDOW_FONT, '16'))
-    msg.pack()
-    center(root, msg, message_y)
-    OKbutton = tk.Button(root, text="OK", font=(WINDOW_FONT, '16'), command=lambda:IsOk(root))
-    OKbutton.pack()
-    center(root, OKbutton, height - 100)
+    # winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
+    # root = tk.Tk()
+    # root.iconbitmap(default=FAVICON_FILE)
+    # root.title(u"Face Recognizer")
+    # root.geometry(str(width)+'x'+str(height))
+    # hd = tk.Label(root, text=head, font=(WINDOW_FONT, '32'))
+    # hd.pack()
+    # center(root, hd, head_y)
+    # msg = tk.Label(root, text=message, font=(WINDOW_FONT, '16'))
+    # msg.pack()
+    # center(root, msg, message_y)
+    # OKbutton = tk.Button(root, text="OK", font=(WINDOW_FONT, '16'), command=lambda:IsOk(root))
+    # OKbutton.pack()
+    # center(root, OKbutton, height - 100)
 
-    root.mainloop()
+    # root.mainloop()
 
-    return 0
+    # return 0
+    pass
 
 
     

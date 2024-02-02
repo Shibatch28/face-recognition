@@ -81,6 +81,7 @@ class authentication(object):
         )
 
         result = copy.deepcopy(frame)
+        return_confidence = None
 
         for(x,y,w,h) in faces:
             # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)

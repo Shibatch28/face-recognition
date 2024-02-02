@@ -3,7 +3,7 @@ import face_recognition
 import numpy as np
 import interface
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 FLAG_ENTRY_OR_AUTHENTICATE = interface.thumbnail()
 FLAG_ENTRY_NUMBER = 0
@@ -108,6 +108,7 @@ elif FLAG_ENTRY_OR_AUTHENTICATE == 2:
     while True:
 
         ret, img = cap.read()
+        cv2.imshow('Authenticating...', img)
 
         if ret:
             recognized, confidence = face_recognition.authentication(trainerPath).recognize(img)

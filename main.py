@@ -5,12 +5,13 @@ import interface
 import tkinter as tk
 from tkinter import messagebox as msgbox
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 
 FLAG_ENTRY_OR_AUTHENTICATE = interface.thumbnail()
 FLAG_ENTRY_NUMBER = 0
 
 # print(FLAG_ENTRY_OR_AUTHENTICATE)
+face_angle_checker = face_recognition.FaceAngleChecker()
 
 # 登録用
 if FLAG_ENTRY_OR_AUTHENTICATE == 1:
@@ -19,7 +20,6 @@ if FLAG_ENTRY_OR_AUTHENTICATE == 1:
     ids = []
     trainerPath = 'trainer/trainer.yml'
     
-    face_angle_checker = face_recognition.FaceAngleChecker()
 
     while True:
 
@@ -111,17 +111,61 @@ elif FLAG_ENTRY_OR_AUTHENTICATE == 2:
     ids = []
     trainerPath = 'trainer/trainer.yml'
 
+    FLAG_AUTHENTICATE_NUMBER = 0
+    center_yaw = 0
+    center_pitch = 0
+    min_yaw = 0
+    max_yaw = 0
+    min_pitch = 0
+    min_pitch = 0
+
     while True:
 
         ret, img = cap.read()
         cv2.imshow('Authenticating...', img)
 
+        
         if ret:
             recognized, confidence = face_recognition.authentication(trainerPath).recognize(img)
-            if confidence is not None:
-                if confidence > 60:
-                    interface.authenticated()
-                    break
+            auth = face_recognition.entry(img)
+            detected = auth.detect()
+            if detected is not None and len(detected) > 0:
+                angles = face_angle_checker.check_degree(detected)
+                if angles is not None :
+                    print("Yaw: {:.2f}, Pitch: {:.2f}, Roll: {:.2f}".format(*angles))
+                    pitch = angles[1]
+                    yaw = angles[0]
+                    roll = angles[2]
+                    # Pitch: 顔の上下
+                    # Yaw: 顔の左右
+                    # Roll: 顔の傾斜
+                    if FLAG_AUTHENTICATE_NUMBER == 0:
+                        if confidence is not None:
+                            print(confidence)
+                            if confidence > 60:
+                                # interface.authenticated()
+                                msgbox.showinfo('第一次認証完了', '第一次認証が完了しました．顔を左右上下に動かしてください．')
+                                center_yaw = yaw
+                                center_pitch = pitch
+                                min_yaw = yaw
+                                min_pitch = pitch
+                                max_yaw = yaw
+                                max_pitch = pitch
+                                FLAG_AUTHENTICATE_NUMBER = 1
+                    elif FLAG_AUTHENTICATE_NUMBER == 1:
+                        if yaw < min_yaw:
+                            min_yaw = yaw
+                        if yaw > max_yaw:
+                            max_yaw = yaw
+                        if pitch < min_pitch:
+                            min_pitch = pitch
+                        if pitch > max_pitch:
+                            max_pitch = pitch
+                        if max_yaw - min_yaw >= 30 and max_pitch - min_pitch >=5:
+                            msgbox.showinfo('第二次認証完了', '第二次認証が完了しました．アプリケーションを終了します．')
+                            break
+                        
+                    
                 
         key = cv2.waitKey(1)
         if key==ord('q'):

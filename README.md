@@ -12,3 +12,6 @@ pip install tkinter
 ```
 
 学習済みデータ: [dlib.net](http://dlib.net/files/)
+
+## 使用方法
+main.pyを実行します. ウィンドウ起動ののち, Entryを押せば画像登録開始となります. 
